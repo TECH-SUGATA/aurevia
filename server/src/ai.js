@@ -4,8 +4,9 @@ const GKEY = () => process.env.GEMINI_API_KEY;
 const GMODEL = () => process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
 // Google Gemini (free tier available in Google AI Studio). Used when only GEMINI_API_KEY is set.
-async function callGemini({ system, messages, max_tokens = 600 }) {
-  const model = GMODEL();
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function geminiOnce(model, { system, messages, max_tokens }) {
   const contents = messages.map((m) => ({
     role: m.role === 'assistant' ? 'model' : 'user',
     parts: (Array.isArray(m.content) ? m.content : [{ type: 'text', text: String(m.content) }]).map((b) =>
@@ -19,10 +20,36 @@ async function callGemini({ system, messages, max_tokens = 600 }) {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-goog-api-key': GKEY() },
     body: JSON.stringify({ systemInstruction: { parts: [{ text: system }] }, contents, generationConfig }),
+    signal: AbortSignal.timeout(25000),
   });
-  if (!res.ok) throw new Error(`AI provider error ${res.status}`);
+  if (!res.ok) {
+    const err = new Error(`AI provider error ${res.status} (${model}): ${(await res.text()).slice(0, 300)}`);
+    err.status = res.status;
+    throw err;
+  }
   const data = await res.json();
   return (data.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('\n');
+}
+
+// Tries GEMINI_MODEL first, retries briefly when Google is busy (503/429), then falls back to other models.
+async function callGemini(args) {
+  const extra = (process.env.GEMINI_FALLBACKS || 'gemini-3.7-flash,gemini-3.6-flash,gemini-3.5-flash-lite').split(',');
+  const models = [...new Set([GMODEL(), ...extra].map((m) => m.trim()).filter(Boolean))];
+  let lastErr;
+  for (const model of models) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try { return await geminiOnce(model, args); }
+      catch (e) {
+        lastErr = e;
+        if ([400, 401, 403].includes(e.status)) throw e; // bad key or request: other models will not help
+        const busy = !e.status || [429, 500, 503, 504].includes(e.status);
+        console.warn(`Gemini ${model} attempt ${attempt + 1} failed: ${e.status || e.message}`);
+        if (!busy) break; // e.g. 404 model not found: go to the next model
+        await sleep(700 * (attempt + 1));
+      }
+    }
+  }
+  throw lastErr;
 }
 
 async function callAI(args) {
@@ -69,5 +96,5 @@ export async function chatAdvice({ question, plant, reading, history = [] }) {
     system: `You are Aurevia, a friendly plant-care assistant. Be concise (under 100 words) and practical. ${ctx}`,
     messages: [...history.slice(-6), { role: 'user', content: question }],
   });
-  return { answer };
+  return { answer: String(answer).replace(/\*\*/g, '') };
 }
