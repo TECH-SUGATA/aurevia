@@ -1,0 +1,15 @@
+[Unit]
+Description=Aurevia Raspberry Pi client
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=__USER__
+WorkingDirectory=__DIR__/pi
+EnvironmentFile=__HOME__/.aurevia/aurevia.env
+ExecStart=__DIR__/pi/venv/bin/python aurevia_pi.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

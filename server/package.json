@@ -1,0 +1,10 @@
+{
+  "name": "aurevia-server",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Multi-user cloud server for Aurevia: accounts, Raspberry Pi pairing, readings, auto-watering, AI",
+  "scripts": { "start": "node src/server.js", "dev": "node --watch src/server.js", "test": "node --test test/api.test.js" },
+  "engines": { "node": ">=20" },
+  "dependencies": { "better-sqlite3": "^11.0.0", "express": "^4.21.0" }
+}

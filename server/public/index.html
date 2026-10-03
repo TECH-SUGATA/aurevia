@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#14281F">
+<link rel="icon" type="image/png" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Aurevia">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Aurevia – AI Plant Therapist</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#EBF1ED;--card:#fff;--ink:#14281F;--mute:#5E7468;--line:#D9E3DC;--leaf:#2F7D4F;--lime:#C8E86B;--water:#3A86C8;--warn:#D9962B;--bad:#C8503C;--shadow:0 1px 2px rgba(20,40,31,.06);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E1A14;--card:#16271E;--ink:#E6F0E9;--mute:#8FA699;--line:#243A2E;--leaf:#5FBF85;--lime:#C8E86B}}
+:root[data-theme="dark"]{--bg:#0E1A14;--card:#16271E;--ink:#E6F0E9;--mute:#8FA699;--line:#243A2E;--leaf:#5FBF85;--lime:#C8E86B}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',sans-serif;display:flex;justify-content:center}
+#app{width:100%;max-width:460px;height:100%;display:flex;flex-direction:column;position:relative}
+main{flex:1;overflow-y:auto;padding:20px 18px 24px}
+.page{display:none}.page.on{display:block}
+h1{font-size:28px;font-weight:800;letter-spacing:-.02em;line-height:1.1}
+h2{font-size:17px;font-weight:600;margin-bottom:10px}
+.sub{color:var(--mute);font-size:14px;margin-top:4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin-top:14px;box-shadow:var(--shadow)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.grid .card{margin-top:0;padding:14px}
+.big{font-size:34px;font-weight:800;letter-spacing:-.03em}
+.big small{font-size:15px;font-weight:600;color:var(--mute);margin-left:2px}
+.lbl{font-size:13px;color:var(--mute)}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;background:color-mix(in srgb,var(--leaf) 16%,transparent);color:var(--leaf)}
+.pill.warn{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.pill.bad{background:color-mix(in srgb,var(--bad) 18%,transparent);color:var(--bad)}
+.hero{background:var(--ink);color:var(--bg);border:0;display:flex;align-items:center;gap:18px;padding:20px;border-radius:28px}
+:root[data-theme="dark"] .hero{background:#1E3A2B;color:#E6F0E9}
+.ring{width:112px;height:112px;flex:none;position:relative}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:30px;font-weight:800}
+.hero .lbl{color:color-mix(in srgb,var(--bg) 65%,transparent)}
+svg{display:block}
+.spark{width:100%;height:56px;margin-top:8px}
+nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
+nav button{flex:1;background:none;border:0;color:var(--mute);font:600 11px inherit;font-family:inherit;padding:6px 0;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border-radius:12px}
+nav button.on{color:var(--leaf)}
+nav button:focus-visible,.btn:focus-visible,input:focus-visible,.seg button:focus-visible{outline:2px solid var(--leaf);outline-offset:2px}
+nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.btn{background:var(--leaf);color:#fff;border:0;border-radius:14px;padding:12px 18px;font:600 15px inherit;font-family:inherit;cursor:pointer;width:100%}
+:root[data-theme="dark"] .btn,:root:not([data-theme="light"]) .btn{color:#0E1A14}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.bar{height:10px;background:var(--line);border-radius:9px;overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;background:var(--water);border-radius:9px;transition:width .6s}
+.tog{width:48px;height:28px;border-radius:99px;background:var(--line);border:0;position:relative;cursor:pointer;flex:none;transition:.2s}
+.tog::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}
+.tog[aria-pressed=true]{background:var(--leaf)}.tog[aria-pressed=true]::after{left:23px}
+.seg{display:flex;background:var(--line);border-radius:12px;padding:3px;margin-top:14px}
+.seg button{flex:1;border:0;background:none;color:var(--mute);font:600 13px inherit;font-family:inherit;padding:8px;border-radius:10px;cursor:pointer}
+.seg button.on{background:var(--card);color:var(--ink)}
+.drop{border:2px dashed var(--line);border-radius:24px;padding:34px 16px;text-align:center;margin-top:14px;cursor:pointer;display:block}
+.drop img{max-width:100%;max-height:220px;border-radius:14px}
+.log li{list-style:none;display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+.log li:first-child{border:0}.log span{color:var(--mute);min-width:52px}
+.chat{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.msg{max-width:84%;padding:10px 14px;border-radius:18px;font-size:15px;line-height:1.4;background:var(--card);border:1px solid var(--line)}
+.msg.me{align-self:flex-end;background:var(--leaf);color:#fff;border:0}
+.ask{display:flex;gap:8px;margin-top:14px}
+.ask input{flex:1;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:12px;font:inherit}
+.ask .btn{width:auto}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.chips button{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:7px 12px;font:600 13px inherit;font-family:inherit;cursor:pointer}
+.note{font-size:12px;color:var(--mute);margin-top:12px;text-align:center}
+#app.land nav{display:none}
+.lh{padding:34px 4px 6px}.brand{display:flex;align-items:center;gap:14px}.wm{font-size:26px;font-weight:800;letter-spacing:-.02em}.hl{font-size:34px;margin-top:26px}.prev{margin-top:18px}.lh .logo{width:54px;height:54px;border-radius:18px;background:var(--ink);display:grid;place-items:center;font-size:28px;margin-bottom:18px}
+:root[data-theme="dark"] .lh .logo{background:#1E3A2B}
+
+.feat{display:flex;gap:12px;padding:11px 0;border-top:1px solid var(--line)}.feat:first-of-type{border:0}.feat b{display:block;font-size:15px}.feat span{font-size:13px;color:var(--mute)}
+.feat i{font-style:normal;font-size:22px;width:34px;flex:none}
+.btn+.btn{margin-top:10px}
+.back{background:none;border:0;color:var(--leaf);font:600 14px inherit;font-family:inherit;cursor:pointer;padding:0 0 12px}
+.av{width:52px;height:52px;border-radius:50%;background:var(--lime);color:#14281F;display:grid;place-items:center;font-weight:800;font-size:18px;flex:none}
+.ct{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.ct a{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:13px;font-weight:600;color:var(--ink);text-decoration:none}
+.ct a:hover{border-color:var(--leaf);color:var(--leaf)}.ct a:focus-visible{outline:2px solid var(--leaf);outline-offset:2px}
+@media(min-width:760px){
+#app{max-width:1120px;flex-direction:row-reverse}
+nav{flex-direction:column;justify-content:flex-start;width:210px;border-top:0;border-right:1px solid var(--line);background:transparent;padding:28px 10px;gap:4px}
+nav button{flex:none;flex-direction:row;justify-content:flex-start;gap:12px;font-size:15px;padding:12px 14px}
+nav button:hover{background:var(--line)}nav button.on{background:color-mix(in srgb,var(--leaf) 14%,transparent)}
+main{padding:34px 36px}
+.page{max-width:760px;margin:0 auto}
+.grid{grid-template-columns:repeat(4,1fr)}
+.card{padding:20px}.grid .card{padding:16px}
+#chart{height:200px}
+.hero{padding:26px}.ring,.ring svg{width:132px;height:132px}
+}
+@media(min-width:1100px){.page{max-width:820px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.banner{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad);border-radius:14px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:14px;line-height:1.4}
+.banner[hidden]{display:none}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+@media(min-width:820px){
+ #app{max-width:1080px;flex-direction:row-reverse}
+ nav{flex-direction:column;width:210px;border-top:0;border-right:1px solid var(--line);padding:28px 12px;gap:4px;justify-content:flex-start}
+ nav button{flex-direction:row;justify-content:flex-start;gap:12px;padding:12px 14px;font-size:14px}
+ main{padding:34px 40px}
+ .page{max-width:780px}
+ .grid{grid-template-columns:repeat(4,1fr)}
+ #app.land nav{display:none}#landing{max-width:540px;margin:0 auto}
+}
+.fld{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:12px;font:inherit;margin:4px 0 12px}
+.sel{width:100%;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:10px;font:inherit;margin-top:12px}
+.sel[hidden],.page [hidden]{display:none}
+.cmd{background:var(--ink);color:var(--bg);border-radius:12px;padding:12px;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;overflow-x:auto;white-space:pre-wrap;word-break:break-all;margin:0 0 14px}
+.log li .pill{flex:none;align-self:center}
+@media(min-width:820px){#auth{max-width:420px;margin:0 auto}#app.land #auth{margin-top:6vh}}
+.credit{margin-top:18px;text-align:center;font-size:13px;color:var(--mute);cursor:pointer;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--card)}.credit b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div id="app" class="land">
+<main>
+<div class="banner" id="off" role="alert" hidden>Cannot reach the Aurevia server. Check that it is running.</div>
+
+<section class="page on" id="landing">
+  <div class="lh"><div class="brand"><svg viewBox="0 0 64 64" width="64" height="64" aria-label="Aurevia logo"><rect width="64" height="64" rx="20" fill="#14281F"/><path d="M32 49V30" stroke="#E6B94A" stroke-width="4" stroke-linecap="round"/><path d="M32 33C32 22 24 16 14 17c0 10 7 17 18 16z" fill="#E6B94A"/><path d="M32 29c0-9 6-14 15-14 0 9-5 15-15 14z" fill="#5FBF85"/><path d="M10 47h10l3-5 4 9 3-6 2 2h22" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/></svg><div><div class="wm">Aurevia</div><div class="lbl">AI plant therapist</div></div></div>
+  <h1 class="hl">Your plant's health, looked after around the clock.</h1>
+  <p class="sub" style="font-size:16px;line-height:1.55;margin-top:12px">Aurevia reads your plant's soil, checks its leaves with AI, and waters it at the right time. You get a simple health score and clear steps instead of guesswork.</p></div>
+  <div class="card prev"><div class="row"><div><div class="lbl">Monty · Monstera</div><div class="big" style="color:var(--leaf)">84<small>/100</small></div></div><span class="pill">Thriving</span></div>
+    <div class="bar"><i style="width:84%;background:var(--leaf)"></i></div>
+    <div class="row" style="margin-top:12px"><span class="lbl">Moisture 62%</span><span class="lbl">24°C</span><span class="lbl">pH 6.4</span></div></div>
+  <button class="btn" style="margin-top:16px" data-go="home">Open the app</button>
+  <button class="btn ghost" data-go="about">Read the project description</button>
+  <div class="card"><h2>What it does</h2>
+    <div class="feat"><i>📈</i><div><b>Live health monitoring</b><span>Tracks soil moisture, temperature and pH around the clock.</span></div></div>
+    <div class="feat"><i>🍃</i><div><b>Leaf disease detection</b><span>Upload a leaf photo and get a diagnosis with care steps.</span></div></div>
+    <div class="feat"><i>💧</i><div><b>Automatic watering</b><span>Waters only when the soil is dry, and logs every time.</span></div></div>
+    <div class="feat"><i>💬</i><div><b>Plant care assistant</b><span>Ask questions and get answers based on your plant's readings.</span></div></div></div>
+  <div class="card"><h2>How it works</h2>
+    <div class="feat"><i>1</i><div><b>Sense</b><span>Sensors in the soil send readings every few seconds.</span></div></div>
+    <div class="feat"><i>2</i><div><b>Understand</b><span>AI compares readings and leaf photos with healthy ranges.</span></div></div>
+    <div class="feat"><i>3</i><div><b>Act</b><span>The pump waters the plant and you get advice in the app.</span></div></div></div>
+  <div class="credit" data-credit role="link" tabindex="0"></div>
+  <button class="btn ghost" style="margin-top:16px" data-go="devs">Meet the developer</button>
+</section>
+
+<section class="page" id="auth">
+  <h1 id="atitle">Welcome back</h1><p class="sub">Log in to see your plants and devices.</p>
+  <div class="card">
+    <label class="lbl" for="em">Email</label><input class="fld" id="em" type="email" autocomplete="email" maxlength="120">
+    <label class="lbl" for="pw">Password (8+ characters)</label><input class="fld" id="pw" type="password" autocomplete="current-password" maxlength="200">
+    <div id="invwrap" hidden><label class="lbl" for="inv">Invite code</label><input class="fld" id="inv" autocomplete="off"></div>
+    <div class="banner" id="aerr" role="alert" hidden></div>
+    <button class="btn" id="abtn">Log in</button>
+  </div>
+  <button class="btn ghost" id="authsw" style="margin-top:12px">New here? Create an account</button>
+  <button class="btn ghost" data-go="landing">Back</button>
+</section>
+
+<section class="page" id="me">
+  <h1>Me</h1><p class="sub" id="who"></p>
+  <div class="card"><h2>Connect a Raspberry Pi</h2>
+    <p class="sub" style="margin:0 0 12px;line-height:1.5">1. Run this command on your Pi. 2. It shows a pairing code. 3. Type the code below.</p>
+    <pre class="cmd" id="cmd"></pre>
+    <label class="lbl" for="code">Pairing code</label>
+    <input class="fld" id="code" maxlength="12" placeholder="e.g. K7QM-4XPD" autocapitalize="characters" autocomplete="off">
+    <label class="lbl" for="pname">Plant name (optional)</label>
+    <input class="fld" id="pname" maxlength="60" placeholder="e.g. Monty" autocomplete="off">
+    <div class="banner" id="cerr" role="alert" hidden></div>
+    <button class="btn" id="cbtn">Connect device</button>
+  </div>
+  <div class="card"><h2>Your devices</h2><ul class="log" id="dlist"></ul></div>
+  <button class="btn ghost" data-go="about" style="margin-top:14px">About the project</button>
+  <button class="btn ghost" data-go="devs">Developer</button>
+  <button class="btn ghost" id="logout">Log out</button>
+</section>
+
+<section class="page" id="about">
+  <div class="brand" style="margin-bottom:14px"><svg viewBox="0 0 64 64" width="44" height="44" aria-label="Aurevia logo"><rect width="44" height="44" rx="20" fill="#14281F"/><path d="M32 49V30" stroke="#E6B94A" stroke-width="4" stroke-linecap="round"/><path d="M32 33C32 22 24 16 14 17c0 10 7 17 18 16z" fill="#E6B94A"/><path d="M32 29c0-9 6-14 15-14 0 9-5 15-15 14z" fill="#5FBF85"/><path d="M10 47h10l3-5 4 9 3-6 2 2h22" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/></svg><div><h1>About</h1><p class="sub" style="margin:0">Project description</p></div></div>
+  <div class="card"><h2>The problem</h2><p class="sub" style="line-height:1.55;margin-top:0">Most houseplants die from too much or too little water, and diseases are noticed late. Aurevia turns sensor readings and leaf photos into simple, timely advice.</p></div>
+  <div class="card"><h2>How it works</h2><p class="sub" style="line-height:1.55;margin-top:0">A Raspberry Pi with soil sensors sends readings to the Aurevia server. Rules and AI check them against healthy ranges, trigger the pump when needed, and a vision model reviews leaf photos for disease.</p></div>
+  <div class="card"><h2>Built with</h2><div class="ct" style="margin-top:0"><a>React</a><a>TypeScript</a><a>Supabase</a><a>Gemini AI</a><a>Soil sensors</a></div></div>
+  <div class="card" id="aboutdev"></div>
+  <button class="btn" style="margin-top:16px" data-go="devs">Meet the developer</button>
+  <button class="btn ghost" data-go="landing">Back to welcome page</button>
+</section>
+
+<section class="page" id="devs">
+  <button class="back" data-go="about">‹ About</button>
+  <h1>Developer</h1><p class="sub">The person behind Aurevia</p>
+  <div id="devlist"></div>
+</section>
+
+<section class="page" id="home">
+  <div class="row"><div><h1 id="pn">Your plant</h1><p class="sub" id="ps">Waiting for data</p></div><span class="pill" id="hpill">–</span></div>
+  <select class="sel" id="psel" aria-label="Choose plant" hidden></select>
+  <div class="card hero">
+    <div class="ring"><svg viewBox="0 0 120 120" width="112" height="112"><circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="12"/><circle id="ringc" cx="60" cy="60" r="50" fill="none" stroke="var(--lime)" stroke-width="12" stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="50" transform="rotate(-90 60 60)" style="transition:stroke-dashoffset .8s"/></svg><b id="score">84</b></div>
+    <div><div style="font-weight:600;font-size:18px" id="hmsg">Loading…</div><p class="lbl" style="margin-top:6px" id="hsub">All readings are in the healthy range.</p></div>
+  </div>
+  <div class="grid">
+    <div class="card"><div class="lbl">Soil moisture</div><div class="big"><span id="hm">62</span><small>%</small></div></div>
+    <div class="card"><div class="lbl">Temperature</div><div class="big"><span id="ht">24</span><small>°C</small></div></div>
+    <div class="card"><div class="lbl">Soil pH</div><div class="big"><span id="hp">6.4</span></div></div>
+    <div class="card"><div class="lbl">Water tank</div><div class="big"><span id="hk">–</span><small>%</small></div></div>
+  </div>
+  <div class="card"><h2>Today</h2>
+    <ul class="log" id="tasks">
+      <li><span>Now</span>Moisture is fine. No watering needed.</li>
+      <li><span>6 PM</span>Rotate the pot a quarter turn.</li>
+      <li><span>Sun</span>Wipe leaves to help them absorb light.</li>
+    </ul></div>
+  <div class="credit" data-credit role="link" tabindex="0"></div>
+</section>
+
+<section class="page" id="sensors">
+  <h1>Sensors</h1><p class="sub">Live readings, updated every 3 seconds</p>
+  <div class="seg" id="seg"><button class="on" data-k="m">Moisture</button><button data-k="t">Temperature</button><button data-k="p">pH</button></div>
+  <div class="card"><div class="row"><div><div class="lbl" id="sl">Soil moisture</div><div class="big"><span id="sv">62</span><small id="su">%</small></div></div><span class="pill" id="sp">Optimal</span></div>
+    <svg id="chart" viewBox="0 0 300 140" width="100%" height="140" preserveAspectRatio="none" style="margin-top:10px"></svg>
+    <p class="lbl" id="sr" style="margin-top:8px">Healthy range 45–70%</p></div>
+  <div class="card"><h2>What this means</h2><p class="sub" id="sx" style="margin-top:0;line-height:1.5"></p></div>
+</section>
+
+<section class="page" id="scan">
+  <h1>Check a leaf</h1><p class="sub">Take or upload a photo to look for disease.</p>
+  <label class="drop" id="drop"><input type="file" accept="image/*" id="file" hidden><div id="dz"><div style="font-size:34px">🍃</div><div style="font-weight:600;margin-top:6px">Add a leaf photo</div><div class="lbl">Fill the frame with one leaf</div></div></label>
+  <div class="card" id="res" style="display:none"></div>
+  
+</section>
+
+<section class="page" id="water">
+  <h1>Watering</h1><p class="sub">Let your plant water itself when the soil dries out.</p>
+  <div class="card"><div class="row"><div><h2 style="margin:0">Auto-water</h2><p class="lbl">Starts below 40% moisture</p></div><button class="tog" id="auto" aria-pressed="true" aria-label="Auto-water"></button></div></div>
+  <div class="card"><div class="row"><div><div class="lbl">Water tank</div><div class="big"><span id="tk">–</span><small>%</small></div></div><span class="pill" id="pump">Idle</span></div><div class="bar"><i id="tkb" style="width:0%"></i></div><button class="pill" id="refill" style="border:0;cursor:pointer;margin-top:12px">Refill tank</button></div>
+  <button class="btn" style="margin-top:14px" id="wbtn">Water now</button><div class="banner" id="werr" role="alert" hidden style="margin-top:12px"></div>
+  <div class="card"><h2>History</h2><ul class="log" id="wlog"><li>Loading…</li></ul></div>
+</section>
+
+<section class="page" id="ask">
+  <h1>Ask Aurevia</h1><p class="sub">Plant advice based on live readings.</p>
+  <div class="chips" id="chips"><button>Why are leaves yellow?</button><button>How often to water?</button><button>Is the pH okay?</button></div>
+  <div class="chat" id="chat"><div class="msg">Hi! Ask me anything about your plant.</div></div>
+  <div class="ask"><input id="q" placeholder="Ask about your plant" aria-label="Ask a question"><button class="btn" id="send">Send</button></div>
+</section>
+
+</main>
+<nav id="nav">
+  <button class="on" data-p="home"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h14V10"/></svg>Home</button>
+  <button data-p="sensors"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Sensors</button>
+  <button data-p="scan"><svg viewBox="0 0 24 24"><path d="M4 8V5h3M20 8V5h-3M4 16v3h3M20 16v3h-3M8 12h8"/></svg>Scan</button>
+  <button data-p="water"><svg viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 01-12 0c0-4.5 6-11 6-11z"/></svg>Water</button>
+  <button data-p="ask"><svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 01-11.5 7.2L4 20l1-4.5A8 8 0 1121 12z"/></svg>Ask</button>
+  <button data-p="me"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>Me</button>
+</nav>
+</div>
+
+<script>
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const API='/api',PROTECTED=['home','sensors','scan','water','ask','me'];
+const KEYS={m:'moisture',t:'temperature',p:'ph'};
+const cfg={m:{l:'Soil moisture',u:'%',lo:45,hi:70,min:20,max:90,d:0,x:'Moisture shows how much water the roots can reach. Below the range the leaves droop; above it the roots can rot.'},
+t:{l:'Temperature',u:'°C',lo:18,hi:28,min:10,max:35,d:1,x:'Most houseplants like steady warmth. Keep the plant away from cold drafts and direct heater air.'},
+p:{l:'Soil pH',u:'',lo:5.8,hi:7,min:4.5,max:8,d:1,x:'pH controls which nutrients the plant can take up. Slightly acidic soil suits most houseplants.'}};
+let repo=null,user=null,cur='m',plants=[],plant=null,readings=[],pid=null,history=[],mode='login',inviteReq=false;
+try{pid=Number(localStorage.getItem('aurevia_pid'))||null}catch(e){}
+
+async function call(path,method='GET',body){
+ const r=await fetch(API+path,{method,headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined,credentials:'same-origin'});
+ const d=r.status===204?null:await r.json().catch(()=>null);
+ if(r.status===401&&!path.startsWith('/auth/')&&user){user=null;plant=null;plants=[];go('auth');}
+ if(!r.ok)throw new Error((d&&d.error)||'Request failed ('+r.status+')');return d;}
+function showErr(id,m){const b=$(id);b.textContent=m||'';b.hidden=!m;}
+const ago=t=>{const s=Math.max(0,(Date.now()-new Date(t.replace(' ','T')+'Z'))/1000);return s<60?'just now':s<3600?Math.round(s/60)+' min ago':s<86400?Math.round(s/3600)+' h ago':Math.round(s/86400)+' d ago';};
+
+/* ---------- navigation ---------- */
+function go(id){
+ if(PROTECTED.includes(id)&&!user)id='auth';
+ $$('#nav button,.page').forEach(x=>x.classList.remove('on'));$('#'+id).classList.add('on');
+ const t=(id==='devs'||id==='about')?'me':id,b=$(`#nav button[data-p="${t}"]`);if(b)b.classList.add('on');
+ $('#app').classList.toggle('land',id==='landing'||id==='auth');
+ $('main').scrollTop=0;
+ if(id==='water')loadWater();if(id==='me')loadMe();
+ if(location.hash!=='#'+id){try{location.hash=id}catch(e){}}
+}
+$$('#nav button').forEach(b=>b.onclick=()=>go(b.dataset.p));
+$$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+window.addEventListener('hashchange',()=>{const id=location.hash.slice(1),el=id&&$('#'+id);if(el&&el.classList.contains('page')&&!el.classList.contains('on'))go(id);});
+
+/* ---------- account ---------- */
+function paintAuth(){
+ $('#atitle').textContent=mode==='login'?'Welcome back':'Create your account';
+ $('#abtn').textContent=mode==='login'?'Log in':'Create account';
+ $('#authsw').textContent=mode==='login'?'New here? Create an account':'Have an account? Log in';
+ $('#invwrap').hidden=mode==='login'||!inviteReq;
+ $('#pw').autocomplete=mode==='login'?'current-password':'new-password';}
+$('#authsw').onclick=()=>{mode=mode==='login'?'signup':'login';showErr('#aerr','');paintAuth();};
+$('#abtn').onclick=async()=>{
+ showErr('#aerr','');
+ try{const body={email:$('#em').value.trim(),password:$('#pw').value};
+  if(mode==='signup'&&inviteReq)body.invite=$('#inv').value.trim();
+  user=(await call('/auth/'+mode,'POST',body)).user;$('#pw').value='';
+  await afterLogin();go(plants.length?'home':'me');
+ }catch(e){showErr('#aerr',e.message);}};
+$('#pw').onkeydown=e=>{if(e.key==='Enter')$('#abtn').click();};
+$('#logout').onclick=async()=>{try{await call('/auth/logout','POST')}catch(e){}user=null;plant=null;plants=[];readings=[];go('landing');};
+async function afterLogin(){$('#who').textContent=user.email;await load();}
+
+/* ---------- data ---------- */
+async function load(){
+ if(!user)return;
+ try{
+  plants=await call('/plants');
+  plant=plants.find(p=>p.id===pid)||plants[0]||null;pid=plant?plant.id:null;
+  try{if(pid)localStorage.setItem('aurevia_pid',pid)}catch(e){}
+  readings=plant?await call('/plants/'+pid+'/readings?limit=30'):[];
+  $('#off').hidden=true;render();
+  if($('#me').classList.contains('on'))loadMe();
+ }catch(e){if(user){$('#off').textContent=e instanceof TypeError?'Cannot reach the Aurevia server.':e.message;$('#off').hidden=false;}}
+}
+
+function render(){
+ const sel=$('#psel'),sig=plants.map(p=>p.id+p.name).join('|')+pid;
+ sel.hidden=plants.length<2;
+ if(plants.length>1&&sel.dataset.sig!==sig){sel.dataset.sig=sig;sel.innerHTML=plants.map(p=>`<option value="${p.id}"${p.id===pid?' selected':''}>${esc(p.name)}</option>`).join('');}
+ if(!plant){
+  $('#pn').textContent='No plant yet';$('#ps').textContent='Connect your Raspberry Pi to begin';
+  $('#hmsg').textContent='Connect your Raspberry Pi';$('#hsub').textContent='Open the Me tab and enter the pairing code shown on your Pi.';
+  $('#score').textContent='–';$('#ringc').style.strokeDashoffset=314;$('#hpill').textContent='–';$('#hpill').className='pill';
+  drawChart();return;}
+ const r=plant.latest,h=plant.health;
+ $('#pn').textContent=plant.name;
+ $('#ps').textContent=plant.device_online?'Pi online':plant.last_seen?'Pi offline · seen '+ago(plant.last_seen):'Waiting for the Pi';
+ $('#hk').textContent=plant.tank_percent.toFixed(0);$('#tk').textContent=plant.tank_percent.toFixed(0);$('#tkb').style.width=plant.tank_percent+'%';
+ $('#auto').setAttribute('aria-pressed',plant.auto_water);$('#wbtn').disabled=plant.tank_percent<5;
+ if(r){$('#hm').textContent=r.moisture.toFixed(0);$('#ht').textContent=r.temperature.toFixed(0);$('#hp').textContent=r.ph.toFixed(1);}
+ else{['#hm','#ht','#hp'].forEach(i=>$(i).textContent='–');}
+ if(h){
+  $('#score').textContent=h.score;$('#ringc').style.strokeDashoffset=314*(1-h.score/100);
+  const ok=h.label==='thriving',mid=h.label==='needs_care',low=h.status.moisture==='low';
+  $('#hpill').textContent=ok?'Thriving':mid?'Needs care':'Stressed';$('#hpill').className='pill '+(ok?'':mid?'warn':'bad');
+  $('#hmsg').textContent=plant.name+(ok?' is happy':mid?' needs attention':' is stressed');
+  $('#hsub').textContent=ok?'All readings are in the healthy range.':low?'Soil is getting dry. Water soon.':'Some readings are outside the healthy range.';
+  $('#tasks').firstElementChild.lastChild.textContent=low?'Soil is dry. Water your plant.':'Moisture is fine. No watering needed.';
+ }else{$('#hmsg').textContent='Waiting for sensor data';$('#hsub').textContent='Your Pi is paired. The first reading arrives within seconds.';
+  $('#score').textContent='–';$('#ringc').style.strokeDashoffset=314;$('#hpill').textContent='–';$('#hpill').className='pill';}
+ drawChart();
+}
+$('#psel').onchange=e=>{pid=Number(e.target.value);load();};
+
+function drawChart(){
+ const c=cfg[cur],k=KEYS[cur],a=readings.map(x=>x[k]),y=v=>140-(v-c.min)/(c.max-c.min)*140;
+ const pts=a.map((v,i)=>(i?'L':'M')+(i/Math.max(a.length-1,1)*300).toFixed(1)+' '+y(v).toFixed(1)).join(' ');
+ $('#chart').innerHTML=`<rect x="0" y="${y(c.hi)}" width="300" height="${y(c.lo)-y(c.hi)}" fill="var(--leaf)" opacity=".12"/>`+(a.length>1?`<path d="${pts}" fill="none" stroke="var(--leaf)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`:'');
+ const v=plant&&plant.latest?plant.latest[k]:null,st=plant&&plant.health?plant.health.status[k]:null;
+ $('#sl').textContent=c.l;$('#sv').textContent=v===null?'–':v.toFixed(c.d);$('#su').textContent=c.u;
+ $('#sp').textContent=st?(st==='optimal'?'Optimal':st==='low'?'Low':'High'):'';$('#sp').className='pill '+(st&&st!=='optimal'?'warn':'');
+ $('#sr').textContent='Healthy range '+c.lo+'–'+c.hi+c.u;$('#sx').textContent=c.x;}
+$$('#seg button').forEach(b=>b.onclick=()=>{$$('#seg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');cur=b.dataset.k;drawChart();});
+
+/* ---------- watering ---------- */
+async function loadWater(){
+ if(!pid)return;
+ try{const log=await call('/plants/'+pid+'/watering');
+  $('#wlog').innerHTML=log.length?log.slice(0,8).map(e=>`<li><span style="min-width:96px">${new Date(e.created_at.replace(' ','T')+'Z').toLocaleString([],{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>${e.source==='auto'?'Auto-watered':'Watered by you'} · ${e.amount_ml} ml</li>`).join(''):'<li>No watering yet.</li>';
+ }catch(e){}}
+async function act(fn){showErr('#werr','');try{await fn();await load();await loadWater();}catch(e){showErr('#werr',e.message);}}
+$('#wbtn').onclick=()=>{if(!pid)return;act(async()=>{const r=await call('/plants/'+pid+'/water','POST');
+ $('#pump').textContent='Queued';$('#pump').className='pill warn';setTimeout(()=>{$('#pump').textContent='Idle';$('#pump').className='pill'},12000);
+ if(!r.device_online)showErr('#werr','Your Pi looks offline. It will water as soon as it reconnects.');});};
+$('#auto').onclick=()=>{if(plant)act(()=>call('/plants/'+pid+'/settings','PUT',{auto_water:!plant.auto_water}));};
+$('#refill').onclick=()=>{if(pid)act(()=>call('/plants/'+pid+'/refill','POST'));};
+
+/* ---------- devices ---------- */
+async function loadMe(){
+ $('#cmd').textContent=`curl -fsSL https://raw.githubusercontent.com/${repo||'OWNER/aurevia'}/main/pi/install.sh | AUREVIA_REPO=https://github.com/${repo||'OWNER/aurevia'}.git AUREVIA_SERVER=${location.origin} bash`;
+ try{const ds=await call('/devices');
+  $('#dlist').innerHTML=ds.length?ds.map(d=>`<li><div style="flex:1"><b>${esc(d.plant_name||'Device '+d.id)}</b><div class="lbl">${d.last_seen?'Last seen '+ago(d.last_seen):'Never connected'}</div></div><span class="pill ${d.online?'':'warn'}">${d.online?'Online':'Offline'}</span><button class="pill bad" data-rm="${d.id}" style="border:0;cursor:pointer">Remove</button></li>`).join(''):'<li>No device yet.</li>';
+  $$('[data-rm]').forEach(b=>b.onclick=async()=>{if(confirm('Remove this device? The Pi must be paired again to reconnect.')){try{await call('/devices/'+b.dataset.rm,'DELETE');}catch(e){}loadMe();load();}});
+ }catch(e){}}
+$('#cbtn').onclick=async()=>{showErr('#cerr','');
+ try{await call('/devices/claim','POST',{code:$('#code').value,plant_name:$('#pname').value.trim()||undefined});
+  $('#code').value='';$('#pname').value='';pid=null;await load();go('home');
+ }catch(e){showErr('#cerr',e.message);}};
+
+/* ---------- leaf scan ---------- */
+const b64=f=>new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result.split(',')[1]);r.onerror=()=>no(new Error('Could not read the image'));r.readAsDataURL(f);});
+$('#file').onchange=async e=>{const f=e.target.files[0];if(!f)return;
+ $('#dz').innerHTML=`<img src="${URL.createObjectURL(f)}" alt="Your leaf photo">`;
+ const r=$('#res');r.style.display='block';r.innerHTML='<p class="sub">Analyzing…</p>';
+ try{const x=await call('/scan','POST',{image_base64:await b64(f),media_type:f.type,plant_id:pid});
+  const bad=x.confidence>0&&x.severity!=='none';
+  r.innerHTML=`<div class="row"><h2 style="margin:0">${esc(x.diagnosis)}</h2>${x.confidence>0?`<span class="pill ${bad?'warn':''}">${Math.round(x.confidence)}% sure</span>`:''}</div><p class="sub" style="line-height:1.5">${esc(x.advice)}</p>${x.demo?'<p class="note">Demo answer. The server owner can add an AI key for real diagnoses.</p>':''}`;
+ }catch(err){r.innerHTML=`<p class="sub" style="color:var(--bad)">${esc(err.message)}</p>`;}};
+
+/* ---------- chat ---------- */
+let busy=false;
+async function say(t){t=t.trim();if(!t||busy)return;busy=true;
+ const add=(me,txt)=>{const m=document.createElement('div');m.className='msg'+(me?' me':'');m.textContent=txt;$('#chat').append(m);m.scrollIntoView({block:'end'});return m;};
+ add(true,t);const wait=add(false,'Thinking…');
+ try{const d=await call('/chat','POST',{question:t,plant_id:pid,history});wait.textContent=d.answer;history.push({role:'user',content:t},{role:'assistant',content:d.answer});}
+ catch(e){wait.textContent=e.message;}busy=false;}
+$('#send').onclick=()=>{const v=$('#q').value;$('#q').value='';say(v);};
+$('#q').onkeydown=e=>{if(e.key==='Enter')$('#send').click();};
+$$('#chips button').forEach(b=>b.onclick=()=>say(b.textContent));
+
+/* ---------- developers: EDIT THESE with your team's real details ---------- */
+const DEVS=[
+ {n:'Sugata Nayak',r:'AI Engineer & Full-Stack Developer',tag:'Open-Source Contributor',loc:'Kolkata, India',
+  gh:'TECH-SUGATA',
+  li:'sugata-nayak-343099322',
+  site:'https://tech-sugata.github.io/PORTFOLIO/#contact',
+  ph:'+91 98831 31330',
+  em:'sugatanayak65@gmail.com'}];
+const link=(href,txt,ext)=>`<a href="${href}"${ext?' target="_blank" rel="noopener noreferrer"':''}>${txt}</a>`;
+$('#devlist').innerHTML=DEVS.map(d=>`<div class="card"><div class="row" style="justify-content:flex-start"><div class="av">${esc(d.n.split(' ').map(w=>w[0]).slice(0,2).join(''))}</div><div><div style="font-weight:600;font-size:17px">${esc(d.n)}</div><div class="lbl">${esc(d.r)}</div><div class="lbl">${esc(d.loc||'')}</div></div></div>
+<p class="sub" style="margin:12px 0 0">${esc(d.tag||'')}</p>
+<div class="ct">${[d.gh&&link('https://github.com/'+encodeURIComponent(d.gh),'GitHub',1),d.li&&link('https://www.linkedin.com/in/'+encodeURIComponent(d.li),'LinkedIn',1),d.site&&/^https:\/\//.test(d.site)&&link(esc(d.site),'Portfolio',1),d.ph&&link('tel:'+esc(d.ph.replace(/\s/g,'')),esc(d.ph)),d.em&&link('mailto:'+esc(d.em),esc(d.em))].filter(Boolean).join('')||'<span class="lbl">Contact links coming soon.</span>'}</div></div>`).join('');
+(function(){const d=DEVS[0],c=$('#devlist .ct');
+ $('#aboutdev').innerHTML=`<h2>About the developer</h2><p class="sub" style="margin-top:0;line-height:1.55"><b style="color:var(--ink)">${esc(d.n)}</b> is an ${esc(d.r)} and ${esc(d.tag.toLowerCase())} based in ${esc(d.loc)}. He designed and built Aurevia end to end: the web app, the server and the Raspberry Pi software.</p>`+(c?c.outerHTML:'');})();
+$$('[data-credit]').forEach(el=>{const d=DEVS[0];el.innerHTML=`Developed by <b>${esc(d.n)}</b> · ${esc(d.r)}`;el.onclick=()=>go('devs');el.onkeydown=e=>{if(e.key==='Enter')go('devs')};});
+
+/* ---------- start ---------- */
+(async function boot(){
+ try{const hh=await call('/health');inviteReq=hh.invite_required;repo=hh.repo;}catch(e){}
+ paintAuth();
+ try{user=(await call('/auth/me')).user;await afterLogin();}catch(e){user=null;}
+ const id=location.hash.slice(1);if(id&&$('#'+id)&&$('#'+id).classList.contains('page'))go(id);
+ setInterval(load,3000);
+})();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+</script>
+</body>
+</html>
