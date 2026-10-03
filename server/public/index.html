@@ -50,7 +50,10 @@ nav button.on{color:var(--leaf)}
 nav button:focus-visible,.btn:focus-visible,input:focus-visible,.seg button:focus-visible{outline:2px solid var(--leaf);outline-offset:2px}
 nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .btn{background:var(--leaf);color:#fff;border:0;border-radius:14px;padding:12px 18px;font:600 15px inherit;font-family:inherit;cursor:pointer;width:100%}
-:root[data-theme="dark"] .btn,:root:not([data-theme="light"]) .btn{color:#0E1A14}
+:root[data-theme="dark"] .btn{color:#0E1A14}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn{color:#0E1A14}}
+.btn.ghost,:root[data-theme="dark"] .btn.ghost{color:var(--ink)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.ghost{color:var(--ink)}}
 .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
 .bar{height:10px;background:var(--line);border-radius:9px;overflow:hidden;margin-top:10px}
 .bar i{display:block;height:100%;background:var(--water);border-radius:9px;transition:width .6s}
@@ -119,6 +122,7 @@ main{padding:34px 36px}
 .log li .pill{flex:none;align-self:center}
 @media(min-width:820px){#auth{max-width:420px;margin:0 auto}#app.land #auth{margin-top:6vh}}
 .credit{margin-top:18px;text-align:center;font-size:13px;color:var(--mute);cursor:pointer;padding:12px;border:1px solid var(--line);border-radius:16px;background:var(--card)}.credit b{color:var(--ink)}
+.sec{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:30px 0 -4px}
 </style>
 </head>
 <body>
@@ -134,7 +138,6 @@ main{padding:34px 36px}
     <div class="bar"><i style="width:84%;background:var(--leaf)"></i></div>
     <div class="row" style="margin-top:12px"><span class="lbl">Moisture 62%</span><span class="lbl">24°C</span><span class="lbl">pH 6.4</span></div></div>
   <button class="btn" style="margin-top:16px" data-go="home">Open the app</button>
-  <button class="btn ghost" data-go="about">Read the project description</button>
   <div class="card"><h2>What it does</h2>
     <div class="feat"><i>📈</i><div><b>Live health monitoring</b><span>Tracks soil moisture, temperature and pH around the clock.</span></div></div>
     <div class="feat"><i>🍃</i><div><b>Leaf disease detection</b><span>Upload a leaf photo and get a diagnosis with care steps.</span></div></div>
@@ -144,8 +147,13 @@ main{padding:34px 36px}
     <div class="feat"><i>1</i><div><b>Sense</b><span>Sensors in the soil send readings every few seconds.</span></div></div>
     <div class="feat"><i>2</i><div><b>Understand</b><span>AI compares readings and leaf photos with healthy ranges.</span></div></div>
     <div class="feat"><i>3</i><div><b>Act</b><span>The pump waters the plant and you get advice in the app.</span></div></div></div>
-  <div class="credit" data-credit role="link" tabindex="0"></div>
-  <button class="btn ghost" style="margin-top:16px" data-go="devs">Meet the developer</button>
+  <h2 class="sec">About the project</h2>
+  <div class="card"><h2>The problem</h2><p class="sub" style="line-height:1.55;margin-top:0">Most houseplants die from too much or too little water, and diseases are noticed late. Aurevia turns sensor readings and leaf photos into simple, timely advice.</p></div>
+  <div class="card"><h2>The technology</h2><p class="sub" style="line-height:1.55;margin-top:0">A Raspberry Pi with soil sensors sends readings to the Aurevia server. Rules and AI check them against healthy ranges, trigger the pump when needed, and a vision model reviews leaf photos for disease.</p></div>
+  <div class="card"><h2>Built with</h2><div class="ct" style="margin-top:0"><a>HTML · CSS · JavaScript</a><a>Installable web app (PWA)</a><a>Node.js</a><a>Express</a><a>SQLite</a><a>Raspberry Pi</a><a>Python</a><a>Claude AI</a></div></div>
+  <h2 class="sec">Meet the developer</h2>
+  <div class="devcards"></div>
+  <button class="btn" style="margin-top:18px" data-go="home">Open the app</button>
 </section>
 
 <section class="page" id="auth">
@@ -183,7 +191,7 @@ main{padding:34px 36px}
   <div class="brand" style="margin-bottom:14px"><svg viewBox="0 0 64 64" width="44" height="44" aria-label="Aurevia logo"><rect width="44" height="44" rx="20" fill="#14281F"/><path d="M32 49V30" stroke="#E6B94A" stroke-width="4" stroke-linecap="round"/><path d="M32 33C32 22 24 16 14 17c0 10 7 17 18 16z" fill="#E6B94A"/><path d="M32 29c0-9 6-14 15-14 0 9-5 15-15 14z" fill="#5FBF85"/><path d="M10 47h10l3-5 4 9 3-6 2 2h22" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/></svg><div><h1>About</h1><p class="sub" style="margin:0">Project description</p></div></div>
   <div class="card"><h2>The problem</h2><p class="sub" style="line-height:1.55;margin-top:0">Most houseplants die from too much or too little water, and diseases are noticed late. Aurevia turns sensor readings and leaf photos into simple, timely advice.</p></div>
   <div class="card"><h2>How it works</h2><p class="sub" style="line-height:1.55;margin-top:0">A Raspberry Pi with soil sensors sends readings to the Aurevia server. Rules and AI check them against healthy ranges, trigger the pump when needed, and a vision model reviews leaf photos for disease.</p></div>
-  <div class="card"><h2>Built with</h2><div class="ct" style="margin-top:0"><a>React</a><a>TypeScript</a><a>Supabase</a><a>Gemini AI</a><a>Soil sensors</a></div></div>
+  <div class="card"><h2>Built with</h2><div class="ct" style="margin-top:0"><a>HTML · CSS · JavaScript</a><a>Installable web app (PWA)</a><a>Node.js</a><a>Express</a><a>SQLite</a><a>Raspberry Pi</a><a>Python</a><a>Claude AI</a></div></div>
   <div class="card" id="aboutdev"></div>
   <button class="btn" style="margin-top:16px" data-go="devs">Meet the developer</button>
   <button class="btn ghost" data-go="landing">Back to welcome page</button>
@@ -214,6 +222,7 @@ main{padding:34px 36px}
       <li><span>6 PM</span>Rotate the pot a quarter turn.</li>
       <li><span>Sun</span>Wipe leaves to help them absorb light.</li>
     </ul></div>
+  <div class="card"><h2>About Aurevia</h2><p class="sub" style="margin-top:0;line-height:1.55">Aurevia is an AI plant therapist. A Raspberry Pi with soil sensors sends moisture, temperature and pH readings to the server. Aurevia scores your plant's health, waters it automatically when the soil is dry, and lets you scan leaves for disease and ask care questions.</p><div class="ct" style="margin-top:12px"><a>Live monitoring</a><a>Auto-watering</a><a>Leaf scan</a><a>Plant assistant</a></div><button class="btn ghost" data-go="about" style="margin-top:14px">Read the full description</button></div>
   <div class="credit" data-credit role="link" tabindex="0"></div>
 </section>
 
@@ -274,7 +283,7 @@ async function call(path,method='GET',body){
  const r=await fetch(API+path,{method,headers:body?{'content-type':'application/json'}:{},body:body?JSON.stringify(body):undefined,credentials:'same-origin'});
  const d=r.status===204?null:await r.json().catch(()=>null);
  if(r.status===401&&!path.startsWith('/auth/')&&user){user=null;plant=null;plants=[];go('auth');}
- if(!r.ok)throw new Error((d&&d.error)||'Request failed ('+r.status+')');return d;}
+ if(!r.ok)throw new Error((d&&d.error)||(r.status===404||r.status>=500?'Cannot reach the Aurevia server (error '+r.status+'). Please try again in a minute.':'Request failed ('+r.status+')'));return d;}
 function showErr(id,m){const b=$(id);b.textContent=m||'';b.hidden=!m;}
 const ago=t=>{const s=Math.max(0,(Date.now()-new Date(t.replace(' ','T')+'Z'))/1000);return s<60?'just now':s<3600?Math.round(s/60)+' min ago':s<86400?Math.round(s/3600)+' h ago':Math.round(s/86400)+' d ago';};
 
@@ -418,16 +427,17 @@ const DEVS=[
   ph:'+91 98831 31330',
   em:'sugatanayak65@gmail.com'}];
 const link=(href,txt,ext)=>`<a href="${href}"${ext?' target="_blank" rel="noopener noreferrer"':''}>${txt}</a>`;
-$('#devlist').innerHTML=DEVS.map(d=>`<div class="card"><div class="row" style="justify-content:flex-start"><div class="av">${esc(d.n.split(' ').map(w=>w[0]).slice(0,2).join(''))}</div><div><div style="font-weight:600;font-size:17px">${esc(d.n)}</div><div class="lbl">${esc(d.r)}</div><div class="lbl">${esc(d.loc||'')}</div></div></div>
+const devHTML=DEVS.map(d=>`<div class="card"><div class="row" style="justify-content:flex-start"><div class="av">${esc(d.n.split(' ').map(w=>w[0]).slice(0,2).join(''))}</div><div><div style="font-weight:600;font-size:17px">${esc(d.n)}</div><div class="lbl">${esc(d.r)}</div><div class="lbl">${esc(d.loc||'')}</div></div></div>
 <p class="sub" style="margin:12px 0 0">${esc(d.tag||'')}</p>
 <div class="ct">${[d.gh&&link('https://github.com/'+encodeURIComponent(d.gh),'GitHub',1),d.li&&link('https://www.linkedin.com/in/'+encodeURIComponent(d.li),'LinkedIn',1),d.site&&/^https:\/\//.test(d.site)&&link(esc(d.site),'Portfolio',1),d.ph&&link('tel:'+esc(d.ph.replace(/\s/g,'')),esc(d.ph)),d.em&&link('mailto:'+esc(d.em),esc(d.em))].filter(Boolean).join('')||'<span class="lbl">Contact links coming soon.</span>'}</div></div>`).join('');
+$$('#devlist,.devcards').forEach(e=>e.innerHTML=devHTML);
 (function(){const d=DEVS[0],c=$('#devlist .ct');
  $('#aboutdev').innerHTML=`<h2>About the developer</h2><p class="sub" style="margin-top:0;line-height:1.55"><b style="color:var(--ink)">${esc(d.n)}</b> is an ${esc(d.r)} and ${esc(d.tag.toLowerCase())} based in ${esc(d.loc)}. He designed and built Aurevia end to end: the web app, the server and the Raspberry Pi software.</p>`+(c?c.outerHTML:'');})();
 $$('[data-credit]').forEach(el=>{const d=DEVS[0];el.innerHTML=`Developed by <b>${esc(d.n)}</b> · ${esc(d.r)}`;el.onclick=()=>go('devs');el.onkeydown=e=>{if(e.key==='Enter')go('devs')};});
 
 /* ---------- start ---------- */
 (async function boot(){
- try{const hh=await call('/health');inviteReq=hh.invite_required;repo=hh.repo;}catch(e){}
+ try{const hh=await call('/health');inviteReq=hh.invite_required;repo=hh.repo;}catch(e){showErr('#aerr','The Aurevia server is not responding, so sign-up and login will fail. Owner: open /api/health on this site to check the backend.');}
  paintAuth();
  try{user=(await call('/auth/me')).user;await afterLogin();}catch(e){user=null;}
  const id=location.hash.slice(1);if(id&&$('#'+id)&&$('#'+id).classList.contains('page'))go(id);
