@@ -1,0 +1,9 @@
+{
+  "framework": null,
+  "buildCommand": null,
+  "installCommand": null,
+  "outputDirectory": "server/public",
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "https://aurevia-7os9.onrender.com/api/:path*" }
+  ]
+}

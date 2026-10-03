@@ -54,7 +54,7 @@ export function createApp(db = openDb()) {
   // Browsers always send Origin on cross-site writes; refuse any that is not this site.
   app.use('/api', (req, res, next) => {
     const o = req.get('origin');
-    if (req.method !== 'GET' && o) { try { if (new URL(o).host !== req.get('host')) return bad(res, 'Cross-site request blocked', 403); } catch { return bad(res, 'Bad origin', 403); } }
+    if (req.method !== 'GET' && o) { try { if (new URL(o).host !== ((process.env.TRUST_PROXY === '1' && req.get('x-forwarded-host')) || req.get('host')).split(',')[0].trim()) return bad(res, 'Cross-site request blocked', 403); } catch { return bad(res, 'Bad origin', 403); } }
     next();
   });
 
