@@ -47,7 +47,7 @@ svg{display:block}
 nav{display:flex;border-top:1px solid var(--line);background:var(--card);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px))}
 nav button{flex:1;background:none;border:0;color:var(--mute);font:600 11px inherit;font-family:inherit;padding:6px 0;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border-radius:12px}
 nav button.on{color:var(--leaf)}
-nav button:focus-visible,.btn:focus-visible,input:focus-visible,.seg button:focus-visible{outline:2px solid var(--leaf);outline-offset:2px}
+nav button:focus-visible,.btn:focus-visible,input:focus-visible,.seg button:focus-visible,.pwtog:focus-visible{outline:2px solid var(--leaf);outline-offset:2px}
 nav svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .btn{background:var(--leaf);color:#fff;border:0;border-radius:14px;padding:12px 18px;font:600 15px inherit;font-family:inherit;cursor:pointer;width:100%}
 :root[data-theme="dark"] .btn{color:#0E1A14}
@@ -116,6 +116,10 @@ main{padding:34px 36px}
  #app.land nav{display:none}#landing{max-width:540px;margin:0 auto}
 }
 .fld{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:12px;font:inherit;margin:4px 0 12px}
+.pwrap{position:relative}
+.pwrap .fld{padding-right:72px}
+.pwtog{position:absolute;right:8px;top:8px;height:38px;padding:0 12px;border:0;border-radius:9px;background:transparent;color:var(--leaf);font:600 13px inherit;font-family:inherit;cursor:pointer}
+.pwtog:hover{background:color-mix(in srgb,var(--leaf) 12%,transparent)}
 .sel{width:100%;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:10px;font:inherit;margin-top:12px}
 .sel[hidden],.page [hidden]{display:none}
 .cmd{background:var(--ink);color:var(--bg);border-radius:12px;padding:12px;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;overflow-x:auto;white-space:pre-wrap;word-break:break-all;margin:0 0 14px}
@@ -160,8 +164,8 @@ main{padding:34px 36px}
   <h1 id="atitle">Welcome back</h1><p class="sub">Log in to see your plants and devices.</p>
   <div class="card">
     <label class="lbl" for="em">Email</label><input class="fld" id="em" type="email" autocomplete="email" maxlength="120">
-    <label class="lbl" for="pw">Password (8+ characters)</label><input class="fld" id="pw" type="password" autocomplete="current-password" maxlength="200">
-    <div id="invwrap" hidden><label class="lbl" for="inv">Invite code</label><input class="fld" id="inv" autocomplete="off"></div>
+    <label class="lbl" for="pw">Password (8+ characters)</label>
+    <div class="pwrap"><input class="fld" id="pw" type="password" autocomplete="current-password" maxlength="200"><button type="button" class="pwtog" id="pwtog" aria-label="Show password" aria-pressed="false">Show</button></div>
     <div class="banner" id="aerr" role="alert" hidden></div>
     <button class="btn" id="abtn">Log in</button>
   </div>
@@ -276,7 +280,7 @@ const KEYS={m:'moisture',t:'temperature',p:'ph'};
 const cfg={m:{l:'Soil moisture',u:'%',lo:45,hi:70,min:20,max:90,d:0,x:'Moisture shows how much water the roots can reach. Below the range the leaves droop; above it the roots can rot.'},
 t:{l:'Temperature',u:'°C',lo:18,hi:28,min:10,max:35,d:1,x:'Most houseplants like steady warmth. Keep the plant away from cold drafts and direct heater air.'},
 p:{l:'Soil pH',u:'',lo:5.8,hi:7,min:4.5,max:8,d:1,x:'pH controls which nutrients the plant can take up. Slightly acidic soil suits most houseplants.'}};
-let repo=null,user=null,cur='m',plants=[],plant=null,readings=[],pid=null,history=[],mode='login',inviteReq=false;
+let repo=null,user=null,cur='m',plants=[],plant=null,readings=[],pid=null,history=[],mode='login';
 try{pid=Number(localStorage.getItem('aurevia_pid'))||null}catch(e){}
 
 async function call(path,method='GET',body){
@@ -306,14 +310,20 @@ function paintAuth(){
  $('#atitle').textContent=mode==='login'?'Welcome back':'Create your account';
  $('#abtn').textContent=mode==='login'?'Log in':'Create account';
  $('#authsw').textContent=mode==='login'?'New here? Create an account':'Have an account? Log in';
- $('#invwrap').hidden=mode==='login'||!inviteReq;
  $('#pw').autocomplete=mode==='login'?'current-password':'new-password';}
 $('#authsw').onclick=()=>{mode=mode==='login'?'signup':'login';showErr('#aerr','');paintAuth();};
+$('#pwtog').onclick=()=>{
+ const pw=$('#pw'),show=pw.type==='password';
+ pw.type=show?'text':'password';
+ $('#pwtog').textContent=show?'Hide':'Show';
+ $('#pwtog').setAttribute('aria-label',show?'Hide password':'Show password');
+ $('#pwtog').setAttribute('aria-pressed',show);
+ pw.focus();};
 $('#abtn').onclick=async()=>{
  showErr('#aerr','');
  try{const body={email:$('#em').value.trim(),password:$('#pw').value};
-  if(mode==='signup'&&inviteReq)body.invite=$('#inv').value.trim();
   user=(await call('/auth/'+mode,'POST',body)).user;$('#pw').value='';
+  $('#pw').type='password';$('#pwtog').textContent='Show';$('#pwtog').setAttribute('aria-label','Show password');$('#pwtog').setAttribute('aria-pressed','false');
   await afterLogin();go(plants.length?'home':'me');
  }catch(e){showErr('#aerr',e.message);}};
 $('#pw').onkeydown=e=>{if(e.key==='Enter')$('#abtn').click();};
@@ -437,7 +447,7 @@ $$('[data-credit]').forEach(el=>{const d=DEVS[0];el.innerHTML=`Developed by <b>$
 
 /* ---------- start ---------- */
 (async function boot(){
- try{const hh=await call('/health');inviteReq=hh.invite_required;repo=hh.repo;}catch(e){showErr('#aerr','The Aurevia server is not responding, so sign-up and login will fail. Owner: open /api/health on this site to check the backend.');}
+ try{const hh=await call('/health');repo=hh.repo;}catch(e){showErr('#aerr','The Aurevia server is not responding, so sign-up and login will fail. Owner: open /api/health on this site to check the backend.');}
  paintAuth();
  try{user=(await call('/auth/me')).user;await afterLogin();}catch(e){user=null;}
  const id=location.hash.slice(1);if(id&&$('#'+id)&&$('#'+id).classList.contains('page'))go(id);
