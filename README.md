@@ -15,7 +15,7 @@ Live soil sensing · AI leaf diagnosis · Automatic irrigation · One installabl
 
 ![Node.js](https://img.shields.io/badge/Node.js-20+-339933?style=flat-square&logo=nodedotjs&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-4-000000?style=flat-square&logo=express&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-WAL-003B57?style=flat-square&logo=sqlite&logoColor=white)
+![Turso](https://img.shields.io/badge/Turso-libSQL-4FF8D2?style=flat-square&logo=turso&logoColor=black)
 ![Python](https://img.shields.io/badge/Python-3-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Raspberry Pi](https://img.shields.io/badge/Raspberry_Pi-3%2F4%2F5%2FZero_2_W-A22846?style=flat-square&logo=raspberrypi&logoColor=white)
 ![PWA](https://img.shields.io/badge/PWA-installable-5A0FC8?style=flat-square&logo=pwa&logoColor=white)
@@ -72,6 +72,7 @@ It is a complete, multi-user product rather than a single-device demo. Anyone ca
 | 💬 | **Plant care assistant** | Ask a question and get a short answer based on that plant's latest readings. |
 | 🔌 | **One-command Pi setup** | A pairing code links a Pi to a user account. No manual API keys or config files. |
 | 👥 | **Real multi-user accounts** | Every plant, reading and device is scoped to its owner and covered by tests. |
+| ☁️ | **Cloud database** | Data is stored in **Turso (libSQL)**, so it survives redeploys and restarts. |
 | 📱 | **Installable web app** | A PWA with a service worker, manifest and icons. Add it to the home screen. |
 | 🛡️ | **Safe by default** | Hashed passwords, hashed device tokens, rate limits, cross-site write blocking and a hard cap on pump run time. |
 | 🧪 | **Works without hardware** | A built-in `--simulate` mode and demo AI answers let you try everything with no sensors and no API key. |
@@ -89,12 +90,14 @@ flowchart LR
         P["Pump relay"]
     end
 
-    subgraph SRV["Aurevia server (Node.js + SQLite)"]
+    subgraph SRV["Aurevia server (Node.js)"]
         A["Accounts<br/>& pairing"]
         H["Health score<br/>& rules"]
         W["Auto-watering<br/>& queue"]
         AI["AI gateway<br/>Gemini / Claude"]
     end
+
+    DB[("Turso<br/>libSQL database")]
 
     subgraph APP["Web app (PWA)"]
         D["Dashboard"]
@@ -109,12 +112,13 @@ flowchart LR
     L --> AI
     C --> AI
     H --> D
+    SRV <--> DB
 ```
 
 **The control loop**
 
 1. Every **10 seconds** the Pi posts a reading to the server.
-2. The server stores it, computes the health score and decides whether the plant needs water.
+2. The server stores it in Turso, computes the health score and decides whether the plant needs water.
 3. The reply can contain an order: *"run the pump for N ml"*. This happens either because moisture is below the plant's threshold (auto-watering) or because the user tapped **Water now**.
 4. A watering is **logged only when the order is actually delivered** to the Pi.
 5. The server then waits **30 minutes** before it will water the same plant automatically again.
@@ -126,7 +130,7 @@ flowchart LR
 | Layer | Technology |
 |---|---|
 | **Server** | Node.js 20+, Express 4 |
-| **Database** | SQLite through `better-sqlite3` |
+| **Database** | [Turso](https://turso.tech) (libSQL) through `@libsql/client`. Falls back to a local SQLite file when no Turso variables are set. |
 | **Web app** | Plain HTML, CSS and JavaScript as a Progressive Web App (no build step) |
 | **Device client** | Python 3, `gpiozero`, `lgpio`, Adafruit ADS1x15 |
 | **AI** | Google Gemini (free tier available) or Anthropic Claude, chosen by which key you set |
@@ -146,9 +150,15 @@ npm install
 npm start
 ```
 
-Open **http://localhost:3001**, create an account, and you have a working app.
+Open **http://localhost:3001**, create an account, and you have a working app. With no Turso variables set, the server uses a local SQLite file at `./data/aurevia.db`.
 
-> **Windows tip:** use Node.js **22 LTS**. Very new Node versions may have no prebuilt SQLite binary, which forces a native build.
+To run locally against your Turso database instead:
+
+```bash
+TURSO_DATABASE_URL=libsql://your-db.turso.io TURSO_AUTH_TOKEN=your-token npm start
+```
+
+The console prints `Aurevia DB: using Turso` when it is connected.
 
 ### Simulate a plant (no hardware needed)
 
@@ -164,7 +174,20 @@ The simulator prints a **pairing code**. Enter it in the app under **Me → Conn
 
 ## Deployment guide
 
-Pick the path that fits your budget.
+### Step 1: Create the Turso database (all deployments)
+
+```bash
+turso auth login
+turso db create aurevia
+turso db show aurevia --url          # libsql://aurevia-yourname.turso.io
+turso db tokens create aurevia       # your auth token, keep it secret
+```
+
+You do not need to create tables by hand. The server creates them automatically on first start.
+
+> **Never commit your `TURSO_AUTH_TOKEN`.** Keep it only in your host's environment settings or a local `.env` file (which is git-ignored). If it ever leaks, create a new token with `turso db tokens create` and remove the old one.
+
+Pick the hosting path that fits your budget.
 
 ### Option A: Docker on a VPS (production)
 
@@ -172,26 +195,40 @@ Best for a permanent, always-on instance with automatic HTTPS.
 
 ```bash
 git clone https://github.com/TECH-SUGATA/aurevia.git && cd aurevia
-cp .env.example .env        # set DOMAIN, GITHUB_REPO, INVITE_CODE and an AI key
+cp .env.example .env        # set DOMAIN, GITHUB_REPO, INVITE_CODE, TURSO_* and an AI key
 docker compose up -d --build
 ```
 
-Point a domain's **A record** at the server first. Caddy then obtains the HTTPS certificate on its own. Back up the `aurevia-data` Docker volume, because it holds the database.
+Point a domain's **A record** at the server first. Caddy then obtains the HTTPS certificate on its own. Your data lives in Turso, so a server rebuild does not lose it.
 
 ### Option B: Render + Vercel (free demo)
 
 | Part | Where | Setup |
 |---|---|---|
-| **Backend, database, AI** | [Render](https://render.com) | New Web Service, runtime **Docker**, plan **Free**. Add the environment variables from [Configuration](#configuration). |
+| **Backend and AI** | [Render](https://render.com) | New Web Service, runtime **Docker**, plan **Free**. Add the environment variables from [Configuration](#configuration), including `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` and `TRUST_PROXY=1`. |
 | **Frontend** | [Vercel](https://vercel.com) | Import the repository, preset **Other**, root `./`. The included `vercel.json` serves `server/public` and proxies `/api/*` to Render. |
+| **Database** | [Turso](https://turso.tech) | Created in Step 1. Only the Render service needs its variables. |
 
 Before deploying the frontend, edit the `destination` URL in [`vercel.json`](vercel.json) so it points at **your** Render address.
 
-> ⚠️ **Free-plan behaviour:** Render's free instances sleep when idle (the first request can take about a minute) and have no persistent disk, so the SQLite file resets on restart. This is fine for a demo and not for real users. For permanence use Option A, or add a paid persistent disk.
+After the first Render deploy, open **Logs** and look for `Aurevia DB: using Turso`.
+
+> ⚠️ **Free-plan behaviour:** Render's free instances sleep when idle, so the first request can take about a minute. Your data is safe, because it is stored in Turso and not on the Render disk.
 
 ### Option C: Any Node host
 
-Run `npm ci --omit=dev && node src/server.js` inside `server/` and set `TRUST_PROXY=1` when the app sits behind an HTTPS proxy, so cookies are marked `Secure`.
+Run `npm install --omit=dev && node src/server.js` inside `server/`. Set `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`, and set `TRUST_PROXY=1` when the app sits behind an HTTPS proxy, so cookies are marked `Secure`.
+
+### Check that data reaches Turso
+
+Create an account in the app, then run:
+
+```bash
+turso db shell aurevia ".tables"
+turso db shell aurevia "SELECT id, email, created_at FROM users;"
+```
+
+You can also open the Turso dashboard, select the database and use **Edit Data**.
 
 ---
 
@@ -260,6 +297,8 @@ All server settings are environment variables. Copy `.env.example` to `.env` (Do
 
 | Variable | Default | Description |
 |---|---|---|
+| `TURSO_DATABASE_URL` | *(empty)* | Your Turso database URL, starting with `libsql://`. If empty, the server uses a local SQLite file. |
+| `TURSO_AUTH_TOKEN` | *(empty)* | Your Turso auth token. **Keep it secret.** |
 | `DOMAIN` | - | Your domain. Used by Caddy for HTTPS (Docker deployment). |
 | `INVITE_CODE` | *(empty)* | If set, sign-up requires this code. **Strongly recommended**, so strangers cannot spend your AI quota. |
 | `GEMINI_API_KEY` | *(empty)* | Free key from [Google AI Studio](https://aistudio.google.com). Enables real leaf diagnosis and chat. |
@@ -269,8 +308,8 @@ All server settings are environment variables. Copy `.env.example` to `.env` (Do
 | `AI_DAILY_LIMIT` | `30` | AI requests allowed per user per day. |
 | `GITHUB_REPO` | *(empty)* | `owner/name`. Fills in the Pi install command shown in the app. |
 | `PORT` | `3001` | HTTP port. |
-| `DB_FILE` | `./data/aurevia.db` | Path of the SQLite database. |
-| `TRUST_PROXY` | `0` | Set to `1` behind an HTTPS proxy (Caddy, Render, Nginx, Vercel rewrites). |
+| `DB_FILE` | `./data/aurevia.db` | Local SQLite file, used only when `TURSO_DATABASE_URL` is not set (local development). |
+| `TRUST_PROXY` | `0` | Set to `1` behind an HTTPS proxy (Caddy, Render, Nginx, Vercel rewrites). The Dockerfile sets it to `1`. |
 
 Without any AI key the app still works fully and returns clearly marked **demo** answers.
 
@@ -366,6 +405,7 @@ Aurevia is built to be exposed to the internet, within the limits listed below.
 - **Rate limits** apply to sign-up, login, device registration, pairing and AI calls.
 - **Quotas:** up to 5 devices and 10 plants per user.
 - **Pump safety:** a watering is capped at 60 seconds on the Pi, and the server enforces a 30-minute cooldown between automatic waterings.
+- **Secrets:** the Turso token and AI keys are read from environment variables only and are never stored in the repository.
 - **Privacy:** leaf photos are sent to the AI provider only when a key is configured, and they are **not stored** on the server.
 
 ---
@@ -377,7 +417,7 @@ aurevia/
 ├── server/                    Node.js API and web app
 │   ├── src/
 │   │   ├── server.js          Routes, auth, rate limits, watering logic
-│   │   ├── db.js              SQLite schema and access
+│   │   ├── db.js              Turso (libSQL) connection and schema
 │   │   ├── health.js          Healthy ranges and score
 │   │   └── ai.js              Gemini / Claude gateway with retry and fallback
 │   ├── public/                Installable web app (PWA)
@@ -406,7 +446,7 @@ npm install
 npm test
 ```
 
-The suite covers account creation and validation, Pi pairing, automatic and queued watering, **user data isolation**, device revocation, the AI fallback and cross-site request blocking.
+The suite covers account creation and validation, Pi pairing, automatic and queued watering, **user data isolation**, device revocation, the AI fallback and cross-site request blocking. Tests run against an in-memory local database and never touch your Turso data.
 
 ---
 
@@ -415,8 +455,8 @@ The suite covers account creation and validation, Pi pairing, automatic and queu
 Honest notes, so nothing surprises you:
 
 - **Not included yet:** email verification, password reset and an admin panel. Keep `INVITE_CODE` set if you do not want open sign-up.
-- **Single SQLite file.** This suits hundreds of users on one server. Move to PostgreSQL beyond that.
-- **Free hosting resets data.** See the Render notes above.
+- **Turso free plan has monthly row limits.** A Pi reporting every 10 seconds writes about 8,600 readings per day per device, so watch your usage as you add devices. Consider pruning old readings.
+- **Free Render hosting sleeps when idle.** Data is safe in Turso, but the first request after a long pause is slow.
 - **Not a safety system.** This is a learning and hobby project. Do not rely on it for plants you cannot afford to lose.
 
 ---
@@ -426,8 +466,8 @@ Honest notes, so nothing surprises you:
 - [ ] Email verification and password reset
 - [ ] Push notifications for low water and disease alerts
 - [ ] Historical charts and CSV export
+- [ ] Automatic pruning of old readings
 - [ ] Multiple sensor profiles per plant species
-- [ ] PostgreSQL option for larger deployments
 - [ ] Admin panel
 
 Ideas and pull requests are welcome.
